@@ -1,11 +1,14 @@
-// At the very top of your script.js file
+// At the very top of your script.js file (KEEP AS IS)
 // If using a build tool like Vite/Webpack/Rollup (recommended):
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://nqjryzunmgmjwtjziczc.supabase.co'; 
-const supabaseAnonKey = 'sb_publishable_CloPAYO-FBngba4i9UugSA_5TpzvyNM';
+// These are for client-side use (e.g., if you had user authentication or public data fetching).
+// For the contact form, we will NOT use them directly here.
+const supabaseUrl = 'https://nqjryzunmgmjwtjziczc.supabase.co'; // This is correct for your Supabase project
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xanJ5enVubWdtand0anppY3pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1ODE3NTgsImV4cCI6MjA2ODE1Nzc1OH0.6G_Y7jE_DZCAOL7UUqCkGomJkt-eG9stBZv_Y62c5cA'; // This is correct
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey); // Keep this line if you use Supabase client elsewhere
+
 
 // If NOT using a build tool and just linking script.js directly in HTML,
 // uncomment the line below and comment out the line above.
@@ -149,13 +152,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Supabase Configuration - Access from environment variables
     // IMPORTANT: Make sure your .env file is correctly set up with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
-    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-    const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    // These lines are not used for the fetch call below, but are fine if you have other client-side Supabase uses.
+    // const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+    // const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-    console.log("Supabase URL in script:", SUPABASE_URL);       // This line
-    console.log("Supabase Anon Key in script:", SUPABASE_ANON_KEY); // And this line
+    // console.log("Supabase URL in script:", SUPABASE_URL);
+    // console.log("Supabase Anon Key in script:", SUPABASE_ANON_KEY);
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // Keep this line (it was line 151)
+    // const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // This client is for client-side usage only
 
 
     // Contact form handling
@@ -163,33 +167,46 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitBtn = contactForm ? contactForm.querySelector('button[type="submit"]') : null;
     const originalBtnText = submitBtn ? submitBtn.textContent : 'Send Message';
 
+    // Get input elements
+    const nameInput = document.getElementById('name');
+    const emailInput = document.getElementById('email');
+    const subjectInput = document.getElementById('subject'); // Get the subject input
+    const messageTextarea = document.getElementById('message');
+
+
     // Create a paragraph element to display form status messages
-    const formStatusMessage = document.createElement('p');
-    formStatusMessage.style.textAlign = 'center';
-    formStatusMessage.style.marginTop = '15px';
-    formStatusMessage.style.fontSize = '1.1em';
-    formStatusMessage.style.fontWeight = 'bold';
-    formStatusMessage.style.transition = 'color 0.3s ease-in-out'; // Smooth color transition
+    // This is the element you manually added to index.html with id="statusMessage"
+    const formStatusMessage = document.getElementById('statusMessage');
 
     // Append the status message element to the DOM, after the form
-    if (contactForm) {
-        contactForm.after(formStatusMessage);
+    // (This block is not needed if you already have the div in HTML, but ensures it exists)
+    // if (contactForm && !formStatusMessage) { // Only create if it doesn't exist
+    //     formStatusMessage = document.createElement('div'); // Changed to div as per index.html
+    //     formStatusMessage.id = 'statusMessage';
+    //     formStatusMessage.style.textAlign = 'center';
+    //     formStatusMessage.style.marginTop = '15px';
+    //     formStatusMessage.style.fontSize = '1.1em';
+    //     formStatusMessage.style.fontWeight = 'bold';
+    //     formStatusMessage.style.transition = 'color 0.3s ease-in-out';
+    //     contactForm.after(formStatusMessage);
+    // }
 
+
+    if (contactForm && formStatusMessage) { // Ensure both elements exist
         contactForm.addEventListener('submit', async function(e) {
             e.preventDefault(); // Prevent the default form submission (page reload)
 
             // Clear previous messages
             formStatusMessage.textContent = '';
 
-            // Get form data
-            const formData = new FormData(contactForm);
-            const name = formData.get('name');
-            const email = formData.get('email');
-            const subject = formData.get('subject');
-            const message = formData.get('message');
+            // Get form data from elements
+            const name = nameInput.value.trim();
+            const email = emailInput.value.trim();
+            const subject = subjectInput.value.trim(); // Get subject value
+            const message = messageTextarea.value.trim();
 
             // --- Client-side Validation ---
-            if (!name || !email || !subject || !message) {
+            if (!name || !email || !subject || !message) { // Validate all fields including subject
                 formStatusMessage.textContent = 'Please fill in all fields.';
                 formStatusMessage.style.color = 'orange'; // Indicate warning
                 return;
@@ -209,27 +226,33 @@ document.addEventListener('DOMContentLoaded', function() {
             formStatusMessage.textContent = 'Sending message...';
             formStatusMessage.style.color = '#fff'; // White text for processing
 
-            // --- Supabase API Call ---
+            // --- Make the API Call to your Vercel Serverless Function ---
             try {
-                const { data, error } = await supabase
-                    .from('contacts') // Ensure 'contacts' is the exact name of your table in Supabase
-                    .insert([
-                        { name: name, email: email, subject: subject, message: message }
-                    ]);
+                const response = await fetch('/api/contact', { // THIS IS THE CRITICAL CHANGE!
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ name, email, subject, message }), // Send all fields
+                });
 
-                if (error) {
-                    console.error('Error submitting form to Supabase:', error.message);
-                    formStatusMessage.textContent = 'Failed to send message. Please try again later.';
-                    formStatusMessage.style.color = 'red';
-                } else {
-                    console.log('Message sent successfully:', data);
-                    formStatusMessage.textContent = 'Message sent successfully! I will get back to you soon.';
+                const result = await response.json(); // Parse the JSON response from your API route
+
+                if (response.ok) { // Check if the API route responded with a success status (2xx)
+                    console.log('API response successful:', result);
+                    formStatusMessage.textContent = result.message || 'Message sent successfully! I will get back to you soon.';
                     formStatusMessage.style.color = 'green';
                     contactForm.reset(); // Clear the form fields after success
+                } else {
+                    // Handle errors returned by your API route
+                    console.error('API error:', result.error || 'Unknown error from API');
+                    formStatusMessage.textContent = result.error || 'Failed to send message. Please try again later.';
+                    formStatusMessage.style.color = 'red';
                 }
-            } catch (unexpectedError) {
-                console.error('An unexpected error occurred during submission:', unexpectedError);
-                formStatusMessage.textContent = 'An unexpected error occurred. Please try again later.';
+            } catch (networkError) {
+                console.error('An unexpected network error occurred during submission:', networkError);
+                formStatusMessage.textContent = 'An unexpected error occurred. Please check your internet connection.';
                 formStatusMessage.style.color = 'red';
             } finally {
                 // Always reset button state regardless of success or failure
@@ -286,7 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const buttons = document.querySelectorAll('.btn, .project-link'); // Also apply to project links
     buttons.forEach(button => {
         button.style.position = 'relative'; // Ensure button can contain ripple
-        button.style.overflow = 'hidden';   // Hide overflow of ripple
+        button.style.overflow = 'hidden';    // Hide overflow of ripple
         button.addEventListener('click', function(e) {
             // Create ripple element
             const ripple = document.createElement('span');
