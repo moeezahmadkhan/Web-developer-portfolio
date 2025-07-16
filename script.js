@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 // These are for client-side use (e.g., if you had user authentication or public data fetching).
 // For the contact form, we will NOT use them directly here.
 const supabaseUrl = 'https://nqjryzunmgmjwtjziczc.supabase.co'; // This is correct for your Supabase project
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xanJ5enVubWdtand0anppY3pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1ODE3NTgsImV4cCI6MjA2ODE1Nzc1OH0.6G_Y7jE_DZCAOL7UUqCkGomJkt-eG9stBZv_Y62c5cA'; // This is correct
+const supabaseAnonKey = 'sb_publishable_CloPAYO-FBngba4i9UugSA_5TpzvyNM'; // This is correct
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey); // Keep this line if you use Supabase client elsewhere
 
