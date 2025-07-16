@@ -2,6 +2,11 @@
 // If using a build tool like Vite/Webpack/Rollup (recommended):
 import { createClient } from '@supabase/supabase-js';
 
+const supabaseUrl = 'https://nqjryzunmgmjwtjziczc.supabase.co'; 
+const supabaseAnonKey = 'sb_publishable_CloPAYO-FBngba4i9UugSA_5TpzvyNM';
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 // If NOT using a build tool and just linking script.js directly in HTML,
 // uncomment the line below and comment out the line above.
 // import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
